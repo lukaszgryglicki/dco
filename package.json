@@ -10,6 +10,8 @@
     "test": "mocha && xo --extend probot"
   },
   "dependencies": {
+    "lokka": "^1.7.0",
+    "lokka-transport-http": "^1.6.1",
     "probot": "~0.2.0"
   },
   "engines": {

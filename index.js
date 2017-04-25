@@ -1,3 +1,5 @@
+const Lokka = require('lokka').Lokka;
+const Transport = require('lokka-transport-http').Transport;
 const dco = require('./lib/dco');
 
 const defaults = {
@@ -18,14 +20,35 @@ module.exports = robot => {
 
   async function check(event, context) {
     const github = await robot.auth(event.payload.installation.id);
-    const pr = event.payload.pull_request;
 
-    const compare = await github.repos.compareCommits(context.repo({
-      base: pr.base.sha,
-      head: pr.head.sha
-    }));
+    const client = new Lokka({
+      transport: new Transport('http://api.github.com/graphql', {
+        headers: {'Authorization': `token ${github.auth.token}`}
+      })
+    });
 
-    const signedOff = compare.commits.every(data => dco(data.commit));
+    const result = await client.query(`
+      query commitMessages($owner: String!, $repo: String!, $number: Int!) {
+        repositoryOwner(login: $owner) {
+          repository(name: $repo){
+            pullRequest(number: $number) {
+              commits(first: 100) {
+                edges {
+                  node {
+                    message
+                    author { name, email }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `, context.issue());
+
+    const signedOff = data.repositoryOwner.repository.pullRequest.commits.every(edge => {
+      return dco(edge.node);
+    });
 
     const params = Object.assign({
       sha: pr.head.sha,
