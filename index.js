@@ -1,4 +1,5 @@
 const dco = require('./lib/dco');
+const dco_is_merge = require('./lib/dco_is_merge');
 
 const defaults = {
   success: {
@@ -25,12 +26,13 @@ module.exports = robot => {
       head: pr.head.sha
     }));
 
-    const signedOff = compare.commits.every(data => dco(data.commit));
+    const mergeCommit = dco_is_merge(compare.data.commits);
+    const signedOff = compare.data.commits.every(data => dco(data.commit));
 
     const params = Object.assign({
       sha: pr.head.sha,
       context: 'DCO'
-    }, signedOff ? defaults.success : defaults.failure);
+    }, (signedOff || mergeCommit) ? defaults.success : defaults.failure);
 
     return github.repos.createStatus(context.repo(params));
   }

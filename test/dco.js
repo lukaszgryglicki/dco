@@ -1,5 +1,6 @@
 const expect = require('expect');
 const dco = require('../lib/dco');
+const dco_is_merge = require('../lib/dco_is_merge');
 
 describe('dco', () => {
   it('returns true if message contains signoff', () => {
@@ -41,6 +42,8 @@ describe('dco', () => {
   describe('integration tests', () => {
     const signedOff = require('./fixtures/push.signed-off');
     const notSignedOff = require('./fixtures/push.not-signed-off');
+    const mergeRequest = require('./fixtures/merge-request');
+    const badMergeRequest = require('./fixtures/incorrect-merge-request');
 
     it('passes for commits with signoff', () => {
       signedOff.commits.forEach(commit => {
@@ -52,6 +55,11 @@ describe('dco', () => {
       notSignedOff.commits.forEach(commit => {
         expect(dco(commit)).toBe(false);
       });
+    });
+
+    it('correctly detects merge request', () => {
+      expect(dco_is_merge(mergeRequest.commits)).toBe(true);
+      expect(dco_is_merge(badMergeRequest.commits)).toBe(false);
     });
   });
 });
